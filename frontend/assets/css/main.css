@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Helpers */
+.btn-primary   { @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700; }
+.btn-secondary { @apply px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700; }
+.btn-danger    { @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700; }
+.input         { @apply w-full border rounded-lg p-2; }
+.textarea      { @apply w-full border rounded-lg p-2 h-32; }
+.link          { @apply inline-block mt-2 text-blue-600 hover:underline; }
