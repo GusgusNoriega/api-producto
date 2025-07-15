@@ -1,13 +1,7 @@
-<!-- frontend/app.vue -->
-<script setup>
-/*
- * Este archivo es la “plantilla raíz”.
- * NuxtPage mostrará la página que coincida con la URL,
- * y NuxtLoadingIndicator dibuja la barrita de carga (opcional)
- */
-</script>
-
 <template>
-  <NuxtLoadingIndicator />
-  <NuxtPage />
+  <!-- Nuxt aplica aquí el layout que indique la ruta -->
+  <NuxtLayout>
+    <!-- Dentro del layout se inyecta la página solicitada -->
+    <NuxtPage />
+  </NuxtLayout>
 </template>

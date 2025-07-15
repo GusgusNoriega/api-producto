@@ -1,24 +1,26 @@
 <script setup lang="ts">
-import { useAsyncData } from '#app'
+definePageMeta({ layout: 'products' })
 import { ref } from 'vue'
+import { useProducts } from '~/composables/useProducts'
 
-// ① Estado de la paginación (Laravel usa ?page=)
 const page = ref(1)
+const { data: pag, refresh } = useProducts(page)
 
-// ② Consumir la API cada vez que cambie `page`
-const { data: pag } = await useAsyncData(
-  () => $fetch('http://api-producto.test/api/products', {
-    params: { page: page.value },
-  }),
-  { watch: [page] }
-)
+function next() {
+  if (pag.value?.next_page_url) page.value++
+}
+function prev() {
+  if (pag.value?.prev_page_url) page.value--
+}
 </script>
 
 <template>
   <section class="space-y-8">
-    <h1 class="text-3xl font-bold">Productos</h1>
+    <header class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Productos</h1>
+      <NuxtLink to="/products/new" class="btn-primary">+ Nuevo</NuxtLink>
+    </header>
 
-    <!-- ③ Grilla -->
     <ul class="grid gap-6 md:grid-cols-3">
       <li
         v-for="p in pag?.data"
@@ -27,35 +29,25 @@ const { data: pag } = await useAsyncData(
       >
         <img
           v-if="p.image_path"
-          :src="`http://api-producto.test/storage/${p.image_path}`"
+          :src="`${$config.public.storageBase}/${p.image_path}`"
           :alt="p.name"
         />
-        <div class="p-4">
+        <div class="p-4 space-y-2">
           <h2 class="font-semibold">{{ p.name }}</h2>
           <p class="text-sm">{{ p.description }}</p>
 
-          <NuxtLink :to="`/products/${p.id}`" class="link"
-            >Ver detalle</NuxtLink
-          >
+          <NuxtLink :to="`/products/${p.id}`" class="link">
+            Ver detalle →
+          </NuxtLink>
         </div>
       </li>
     </ul>
 
-    <!-- ④ Controles de paginación -->
     <div class="flex gap-2">
-      <button
-        class="btn-secondary"
-        :disabled="!pag?.prev_page_url"
-        @click="page--"
-      >
+      <button class="btn-secondary" :disabled="!pag?.prev_page_url" @click="prev">
         ← Anterior
       </button>
-
-      <button
-        class="btn-secondary"
-        :disabled="!pag?.next_page_url"
-        @click="page++"
-      >
+      <button class="btn-secondary" :disabled="!pag?.next_page_url" @click="next">
         Siguiente →
       </button>
     </div>

@@ -1,34 +1,24 @@
-<!-- pages/products/[id]/edit.vue -->
 <script setup lang="ts">
-import type { Product } from '@/lib/api'
+definePageMeta({ layout: 'products' })
 
-const { id } = useRoute().params           // id es string
+import { useRoute, useRouter } from '#app'
+import { getProduct, updateProduct } from '~/composables/useProducts'
+import type { Product } from '~/composables/useProducts'
+
+const route = useRoute()
 const router = useRouter()
-const { $api }  = useNuxtApp()
+const id = Number(route.params.id)
 
-/**
- * Obtenemos el producto; si el servidor responde 404
- * redirigimos al listado.
- */
-const { data: product, error } = await useAsyncData(
-  `product-edit-${id}`,
-  () => $api.get<Product>(`/products/${id}`).then(r => r.data)
-)
+const { data: product } = await useAsyncData(() => getProduct(id))
 
-// Si la API devolvió 404 → vuelve al listado
-if (error.value?.response?.status === 404) {
-  router.push('/products')
+async function save(form: FormData) {
+  await updateProduct(id, form)
+  router.push(`/products/${id}`)
 }
 </script>
 
 <template>
-  <!-- Mientras carga puedes mostrar un spinner -->
-  <div v-if="!product" class="text-center py-12">Cargando…</div>
+  <h1 class="text-2xl font-bold mb-4">Editar producto</h1>
 
-  <!-- Cuando llegue el producto lo pasamos desenrollado -->
-  <ProductForm
-    v-else
-    :product="product"
-    @saved="() => {}"
-  />
+  <ProductForm v-if="product" :modelValue="product as Product" @submit="save" />
 </template>

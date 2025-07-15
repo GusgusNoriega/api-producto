@@ -1,76 +1,60 @@
-<!-- components/ProductForm.vue -->
 <script setup lang="ts">
-/* ------------------------------------------------------------------ */
-/* Imports y tipos                                                     */
-/* ------------------------------------------------------------------ */
-import { reactive } from 'vue'
-import { useNuxtApp, navigateTo } from '#app'
-import type { Product } from '@/lib/api'
+import { ref, watchEffect } from 'vue'
+import type { Product } from '~/composables/useProducts'
 
-/* ------------------------------------------------------------------ */
-/* Props y emits                                                       */
-/* ------------------------------------------------------------------ */
-const props = defineProps<{ product?: Product }>()
-
-const emit = defineEmits<{
-  /** Se dispara cuando el producto se guarda y devuelve el recurso */
-  (e: 'saved', product: Product): void
+const props = defineProps<{
+  modelValue?: Product | null
 }>()
 
-/* ------------------------------------------------------------------ */
-/* Estado reactivo del formulario                                      */
-/* ------------------------------------------------------------------ */
-const form = reactive({
-  name: props.product?.name ?? '',
-  description: props.product?.description ?? '',
-  image: undefined as File | undefined,
+const emit = defineEmits<{
+  (e: 'submit', payload: FormData): void
+}>()
+
+// campos reactivos
+const name = ref('')
+const description = ref('')
+const imageFile = ref<File | null>(null)
+
+// hidrata cuando entra un producto (modo edición)
+watchEffect(() => {
+  if (props.modelValue) {
+    name.value = props.modelValue.name
+    description.value = props.modelValue.description ?? ''
+  }
 })
 
-const { $api } = useNuxtApp()
+function handleFile(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  imageFile.value = files && files[0] ? files[0] : null
+}
 
-/* ------------------------------------------------------------------ */
-/* Lógica de guardado (crear o actualizar)                             */
-/* ------------------------------------------------------------------ */
-async function submit () {
-  const fd = new FormData()
-  fd.append('name', form.name)                 // ← obligatorio
-  if (form.description) fd.append('description', form.description)
-  if (form.image)      fd.append('image', form.image)
+function onSubmit() {
+  const form = new FormData()
+  form.append('name', name.value)
+  form.append('description', description.value)
+  if (imageFile.value) form.append('image', imageFile.value)
 
-  // Nuevo vs. editar
-  const url  = props.product ? `/products/${props.product.id}` : '/products'
-  const verb = props.product ? 'put'           : 'post'        // ← PUT real
-
-  const res = await $api[verb](url, fd)        // Axios hace el boundary
-
-  emit('saved', res.data)
-  navigateTo(`/products/${res.data.id}`)
+  emit('submit', form)
 }
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="space-y-4 max-w-lg">
-    <input
-      v-model="form.name"
-      placeholder="Nombre"
-      class="input"
-      required
-    />
+  <form @submit.prevent="onSubmit" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium">Nombre</label>
+      <input v-model="name" type="text" class="input" required />
+    </div>
 
-    <textarea
-      v-model="form.description"
-      placeholder="Descripción"
-      class="textarea"
-    />
+    <div>
+      <label class="block text-sm font-medium">Descripción</label>
+      <textarea v-model="description" class="input min-h-[100px]"></textarea>
+    </div>
 
-    <input
-      type="file"
-      accept="image/*"
-      @change="e => form.image = (e.target as HTMLInputElement).files?.[0]"
-    />
+    <div>
+      <label class="block text-sm font-medium">Imagen</label>
+      <input type="file" accept="image/*" @change="handleFile" />
+    </div>
 
-    <button class="btn-primary">
-      Guardar
-    </button>
+    <button type="submit" class="btn-primary">Guardar</button>
   </form>
 </template>
